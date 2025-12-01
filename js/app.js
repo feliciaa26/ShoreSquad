@@ -9,8 +9,10 @@
 // ========================================
 
 const CONFIG = {
-    weatherAPI: 'https://api.openweathermap.org/data/2.5/weather',
-    apiKey: 'YOUR_API_KEY_HERE', // User needs to add their own API key
+    // NEA (National Environment Agency) API - Singapore Realtime Weather
+    weatherAPI: 'https://api.data.gov.sg/v1/environment/4-day-weather-forecast',
+    psiAPI: 'https://api.data.gov.sg/v1/environment/psi',
+    uvAPI: 'https://api.data.gov.sg/v1/environment/uv-index',
     mapTileLayer: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     mapAttribution: '&copy; OpenStreetMap contributors',
     defaultZoom: 13,
@@ -225,62 +227,117 @@ function requestGeolocation() {
 // ========================================
 
 /**
- * Fetch weather data from API
+ * Fetch weather data from NEA (Singapore National Environment Agency)
+ * Uses public API from data.gov.sg - No authentication required
  */
 async function fetchWeatherData(lat, lon) {
     try {
         DOM.weatherGrid.innerHTML = '<div class="weather-card loading"><div class="weather-skeleton"></div></div>';
 
-        // Mock weather data (replace with real API call when API key available)
-        const weatherData = {
-            main: {
-                temp: Math.round(22 + Math.random() * 8),
-                humidity: Math.round(60 + Math.random() * 30),
-                pressure: 1013,
-            },
-            weather: [
-                {
-                    main: ['Sunny', 'Cloudy', 'Rainy'][Math.floor(Math.random() * 3)],
-                    description: 'mostly cloudy with 20% chance of rain',
-                }
-            ],
-            wind: {
-                speed: Math.round(5 + Math.random() * 15),
-            },
-        };
+        // Fetch 4-day weather forecast from NEA
+        const response = await fetch(CONFIG.weatherAPI);
+        
+        if (!response.ok) {
+            throw new Error('Weather API unavailable');
+        }
 
-        AppState.weatherData = weatherData;
-        renderWeatherCard(weatherData);
+        const weatherData = await response.json();
+        
+        // Extract today's forecast
+        if (weatherData.items && weatherData.items.length > 0) {
+            const todayForecast = weatherData.items[0];
+            const forecasts = todayForecast.forecast;
+            
+            // Store full forecast data
+            AppState.weatherData = {
+                forecast: forecasts,
+                validPeriod: todayForecast.valid_period,
+            };
+            
+            // Render 4-day forecast cards
+            renderWeatherForecast(forecasts);
+        } else {
+            renderMockWeatherForecast();
+        }
     } catch (error) {
         console.error('Weather fetch error:', error);
-        showNotification('Could not fetch weather data', 'error');
-        DOM.weatherGrid.innerHTML = '<p>Weather data unavailable</p>';
+        console.log('Falling back to mock weather data');
+        renderMockWeatherForecast();
     }
 }
 
 /**
- * Render weather card
+ * Render 4-day weather forecast
  */
-function renderWeatherCard(data) {
-    const { main, weather, wind } = data;
-    const condition = weather[0];
-    const weatherIcon = getWeatherIcon(condition.main);
-
-    const card = document.createElement('div');
-    card.className = 'weather-card';
-    card.innerHTML = `
-        <div style="font-size: 2.5rem; margin-bottom: 8px;">${weatherIcon}</div>
-        <div class="weather-temp">${main.temp}°C</div>
-        <div class="weather-condition">${condition.main}</div>
-        <div class="weather-details">
-            <div>💨 Wind: ${wind.speed} km/h</div>
-            <div>💧 Humidity: ${main.humidity}%</div>
-            <div>📊 Pressure: ${main.pressure} hPa</div>
-        </div>
-    `;
-
+function renderWeatherForecast(forecasts) {
     DOM.weatherGrid.innerHTML = '';
-    DOM.weatherGrid.appendChild(card);
+    
+    if (!forecasts || forecasts.length === 0) {
+        renderMockWeatherForecast();
+        return;
+    }
+
+    // Show 4 days of forecast (or available days)
+    const daysToShow = Math.min(4, forecasts.length);
+    
+    for (let i = 0; i < daysToShow; i++) {
+        const forecast = forecasts[i];
+        const date = new Date(forecast.date);
+        const dayName = date.toLocaleDateString('en-SG', { weekday: 'short' });
+        const dateStr = date.toLocaleDateString('en-SG', { month: 'short', day: 'numeric' });
+        
+        const weatherIcon = getWeatherIcon(forecast.forecast);
+        const condition = forecast.forecast;
+        
+        const card = document.createElement('div');
+        card.className = 'weather-card forecast-card';
+        card.innerHTML = `
+            <div class="forecast-day">${dayName}</div>
+            <div class="forecast-date">${dateStr}</div>
+            <div style="font-size: 2rem; margin: 8px 0;">${weatherIcon}</div>
+            <div class="forecast-condition">${condition}</div>
+            <div class="forecast-temps">
+                <div class="temp-high">${forecast.temperature.high}°C</div>
+                <div class="temp-low">${forecast.temperature.low}°C</div>
+            </div>
+        `;
+        
+        DOM.weatherGrid.appendChild(card);
+    }
+}
+
+/**
+ * Render mock weather forecast (fallback)
+ */
+function renderMockWeatherForecast() {
+    DOM.weatherGrid.innerHTML = '';
+    
+    const mockForecasts = [
+        { date: new Date(), day: 'Today', condition: 'Partly Cloudy', high: 28, low: 24 },
+        { date: new Date(Date.now() + 86400000), day: 'Tomorrow', condition: 'Thunderstorm', high: 26, low: 23 },
+        { date: new Date(Date.now() + 172800000), day: 'Day 3', condition: 'Cloudy', high: 29, low: 25 },
+        { date: new Date(Date.now() + 259200000), day: 'Day 4', condition: 'Sunny', high: 30, low: 26 },
+    ];
+    
+    mockForecasts.forEach(forecast => {
+        const weatherIcon = getWeatherIcon(forecast.condition);
+        const card = document.createElement('div');
+        card.className = 'weather-card forecast-card';
+        card.innerHTML = `
+            <div class="forecast-day">${forecast.date.toLocaleDateString('en-SG', { weekday: 'short' })}</div>
+            <div class="forecast-date">${forecast.date.toLocaleDateString('en-SG', { month: 'short', day: 'numeric' })}</div>
+            <div style="font-size: 2rem; margin: 8px 0;">${weatherIcon}</div>
+            <div class="forecast-condition">${forecast.condition}</div>
+            <div class="forecast-temps">
+                <div class="temp-high">${forecast.high}°C</div>
+                <div class="temp-low">${forecast.low}°C</div>
+            </div>
+        `;
+        
+        DOM.weatherGrid.appendChild(card);
+    });
+    
+    showNotification('Using mock weather data (Live API unavailable)', 'info');
 }
 
 /**

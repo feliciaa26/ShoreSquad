@@ -548,6 +548,52 @@ a:focus {
     margin-bottom: var(--spacing-md);
 }
 
+.forecast-card {
+    padding: var(--spacing-md);
+    text-align: center;
+    background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.forecast-day {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    opacity: 0.95;
+}
+
+.forecast-date {
+    font-size: var(--font-size-sm);
+    opacity: 0.8;
+    margin-bottom: var(--spacing-sm);
+}
+
+.forecast-condition {
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
+    margin: var(--spacing-sm) 0;
+    line-height: 1.4;
+}
+
+.forecast-temps {
+    display: flex;
+    justify-content: space-around;
+    margin-top: var(--spacing-md);
+    font-weight: 600;
+}
+
+.temp-high {
+    font-size: var(--font-size-lg);
+    opacity: 1;
+}
+
+.temp-low {
+    font-size: var(--font-size-lg);
+    opacity: 0.75;
+}
+
 .weather-details {
     font-size: var(--font-size-sm);
     opacity: 0.85;
