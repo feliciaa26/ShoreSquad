@@ -333,9 +333,12 @@ async function fetchWeatherData(lat, lon) {
  * Render 4-day weather forecast
  */
 function renderWeatherForecast(forecasts) {
+    console.log('🌤️ renderWeatherForecast called with:', forecasts?.length || 0, 'forecasts');
+    
     DOM.weatherGrid.innerHTML = '';
     
     if (!forecasts || forecasts.length === 0) {
+        console.log('⚠️ No forecasts provided, using mock data');
         renderMockWeatherForecast();
         return;
     }
@@ -384,6 +387,8 @@ function renderWeatherForecast(forecasts) {
  * Render mock weather forecast (fallback)
  */
 function renderMockWeatherForecast() {
+    console.log('🎭 renderMockWeatherForecast called');
+    
     DOM.weatherGrid.innerHTML = '';
     
     const mockForecasts = [
@@ -482,6 +487,8 @@ function initializeMockEvents() {
  * Render events list
  */
 function renderEvents() {
+    console.log('📝 renderEvents called, DOM.eventsList:', DOM.eventsList, 'Events count:', AppState.events.length);
+    
     DOM.eventsList.innerHTML = '';
 
     if (AppState.events.length === 0) {
@@ -570,6 +577,8 @@ function initializeMockCrew() {
  * Render crew members
  */
 function renderCrew() {
+    console.log('👥 renderCrew called, DOM.crewMembers:', DOM.crewMembers, 'Crew count:', AppState.crewMembers.length);
+    
     DOM.crewMembers.innerHTML = '';
 
     AppState.crewMembers.forEach(member => {
@@ -671,6 +680,13 @@ function viewBeachDetails(beachName) {
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize DOM cache first!
     initializeDOMCache();
+    
+    // Debug: Log DOM cache to verify elements are found
+    console.log('🔍 DOM Cache initialized:', {
+        weatherGrid: DOM.weatherGrid ? '✅' : '❌',
+        eventsList: DOM.eventsList ? '✅' : '❌',
+        crewMembers: DOM.crewMembers ? '✅' : '❌'
+    });
 
     // Navigation
     if (DOM.menuToggle) {
