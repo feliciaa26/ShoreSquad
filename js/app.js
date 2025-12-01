@@ -296,20 +296,21 @@ async function fetchWeatherData(lat, lon) {
 
         const weatherData = await response.json();
         
-        // Extract today's forecast
+        // Extract 4-day forecast with detailed data
         if (weatherData.items && weatherData.items.length > 0) {
-            const todayForecast = weatherData.items[0];
-            const forecasts = todayForecast.forecast;
+            const todayItem = weatherData.items[0];
+            const forecasts = todayItem.forecasts;
             
             // Store full forecast data
             AppState.weatherData = {
-                forecast: forecasts,
-                validPeriod: todayForecast.valid_period,
+                forecasts: forecasts,
+                timestamp: todayItem.timestamp,
+                updateTimestamp: todayItem.update_timestamp,
             };
             
-            // Render 4-day forecast cards
+            // Render 4-day forecast cards with detailed information
             renderWeatherForecast(forecasts);
-            console.log('✅ Weather data loaded successfully from NEA API');
+            console.log('✅ Weather data loaded successfully from NEA API', forecasts);
         } else {
             renderMockWeatherForecast();
         }
@@ -319,7 +320,7 @@ async function fetchWeatherData(lat, lon) {
         // Show user-friendly error message
         const errorDiv = document.getElementById('weatherError');
         if (errorDiv) {
-            errorDiv.textContent = `⚠️ Weather data unavailable (${error.message}). Showing forecast estimate.`;
+            errorDiv.textContent = `⚠️ Live weather unavailable. Showing forecast estimate lah! 🌊`;
             errorDiv.className = 'error-message';
             errorDiv.style.display = 'block';
         }
@@ -339,32 +340,39 @@ function renderWeatherForecast(forecasts) {
         return;
     }
 
-    // NEA API returns forecasts as array of strings like ["Partly Cloudy", "Thunderstorm", ...]
-    // Show 4 days of forecast
+    // NEA API returns forecasts as array of objects with detailed weather data
     const daysToShow = Math.min(4, forecasts.length);
     
     for (let i = 0; i < daysToShow; i++) {
-        const forecastCondition = forecasts[i];
-        const date = new Date(Date.now() + (i * 86400000)); // i days from now
+        const forecast = forecasts[i];
+        const date = new Date(forecast.date);
         const dayName = date.toLocaleDateString('en-SG', { weekday: 'short' });
         const dateStr = date.toLocaleDateString('en-SG', { month: 'short', day: 'numeric' });
         
-        const weatherIcon = getWeatherIcon(forecastCondition);
+        const weatherIcon = getWeatherIcon(forecast.forecast);
+        const tempHigh = forecast.temperature.high;
+        const tempLow = forecast.temperature.low;
+        const humidity = forecast.relative_humidity;
+        const wind = forecast.wind;
         
-        // Generate mock temps for display
-        const tempHigh = 26 + Math.floor(Math.random() * 5);
-        const tempLow = 22 + Math.floor(Math.random() * 4);
+        // Day label
+        let dayLabel = 'Today';
+        if (i === 1) dayLabel = 'Tomorrow';
+        if (i >= 2) dayLabel = dayName;
         
         const card = document.createElement('div');
         card.className = 'weather-card forecast-card';
         card.innerHTML = `
-            <div class="forecast-day">${dayName}</div>
+            <div class="forecast-day">${dayLabel}</div>
             <div class="forecast-date">${dateStr}</div>
-            <div style="font-size: 2rem; margin: 8px 0;">${weatherIcon}</div>
-            <div class="forecast-condition">${forecastCondition}</div>
+            <div style="font-size: 2.5rem; margin: 10px 0;">${weatherIcon}</div>
+            <div class="forecast-condition">${forecast.forecast}</div>
             <div class="forecast-temps">
-                <div class="temp-high">${tempHigh}°C</div>
-                <div class="temp-low">${tempLow}°C</div>
+                <div><strong>${tempHigh}°C</strong> / ${tempLow}°C</div>
+            </div>
+            <div class="weather-details">
+                <div>💧 ${humidity.low}-${humidity.high}%</div>
+                <div>💨 ${wind.speed.low}-${wind.speed.high}km/h ${wind.direction}</div>
             </div>
         `;
         
@@ -410,15 +418,24 @@ function renderMockWeatherForecast() {
  * Get emoji icon for weather condition
  */
 function getWeatherIcon(condition) {
-    const icons = {
-        'Sunny': '☀️',
-        'Cloudy': '☁️',
-        'Rainy': '🌧️',
-        'Thunderstorm': '⛈️',
-        'Snow': '❄️',
-        'Clear': '🌟',
-    };
-    return icons[condition] || '🌤️';
+    if (!condition) return '🌤️';
+    
+    const condLower = condition.toLowerCase();
+    
+    // Check various weather conditions
+    if (condLower.includes('sunny') || condLower.includes('clear')) return '☀️';
+    if (condLower.includes('partly cloudy') || condLower.includes('partly')) return '⛅';
+    if (condLower.includes('cloudy') || condLower.includes('overcast')) return '☁️';
+    if (condLower.includes('thundery') || condLower.includes('thunderstorm')) return '⛈️';
+    if (condLower.includes('showers') || condLower.includes('rain')) return '🌧️';
+    if (condLower.includes('drizzle')) return '🌦️';
+    if (condLower.includes('snow')) return '❄️';
+    if (condLower.includes('haze')) return '🌫️';
+    if (condLower.includes('fog')) return '🌫️';
+    if (condLower.includes('wind')) return '💨';
+    
+    // Default
+    return '🌤️';
 }
 
 // ========================================
