@@ -92,13 +92,44 @@ function throttle(func, limit = 300) {
 }
 
 /**
- * Distance calculation using Haversine formula (for nearby beaches)
+ * Show notification messages to user
  */
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a =
+function showNotification(message, type = 'info') {
+    const errorDiv = document.getElementById('weatherError');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.className = type === 'error' ? 'error-message' : type === 'success' ? 'success-message' : 'info-message';
+        errorDiv.style.display = 'block';
+        
+        if (type !== 'error') {
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+    }
+    console.log(`[${type.toUpperCase()}] ${message}`);
+}
+
+/**
+ * Show loading spinner
+ */
+function showLoading(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = '<div class="weather-card loading" aria-busy="true"><div class="weather-skeleton"></div></div>';
+    }
+}
+
+/**
+ * Hide loading spinner
+ */
+function hideLoading(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const loading = element.querySelector('.loading');
+        if (loading) loading.remove();
+    }
+}
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
@@ -232,13 +263,22 @@ function requestGeolocation() {
  */
 async function fetchWeatherData(lat, lon) {
     try {
-        DOM.weatherGrid.innerHTML = '<div class="weather-card loading"><div class="weather-skeleton"></div></div>';
+        showLoading('weatherGrid');
+        const errorDiv = document.getElementById('weatherError');
+        if (errorDiv) errorDiv.style.display = 'none';
 
-        // Fetch 4-day weather forecast from NEA
-        const response = await fetch(CONFIG.weatherAPI);
+        // Fetch 4-day weather forecast from NEA with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+        
+        const response = await fetch(CONFIG.weatherAPI, {
+            signal: controller.signal,
+            headers: { 'Accept': 'application/json' }
+        });
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
-            throw new Error('Weather API unavailable');
+            throw new Error(`API returned status ${response.status}`);
         }
 
         const weatherData = await response.json();
@@ -256,12 +296,21 @@ async function fetchWeatherData(lat, lon) {
             
             // Render 4-day forecast cards
             renderWeatherForecast(forecasts);
+            console.log('✅ Weather data loaded successfully from NEA API');
         } else {
             renderMockWeatherForecast();
         }
     } catch (error) {
-        console.error('Weather fetch error:', error);
-        console.log('Falling back to mock weather data');
+        console.error('❌ Weather fetch error:', error.message);
+        
+        // Show user-friendly error message
+        const errorDiv = document.getElementById('weatherError');
+        if (errorDiv) {
+            errorDiv.textContent = `⚠️ Weather data unavailable (${error.message}). Showing forecast estimate.`;
+            errorDiv.className = 'error-message';
+            errorDiv.style.display = 'block';
+        }
+        
         renderMockWeatherForecast();
     }
 }
