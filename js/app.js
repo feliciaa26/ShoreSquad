@@ -44,19 +44,24 @@ const AppState = {
 // DOM Elements Cache
 // ========================================
 
-const DOM = {
-    geoButton: document.getElementById('geoButton'),
-    menuToggle: document.getElementById('menuToggle'),
-    navMenu: document.getElementById('navMenu'),
-    ctaButton: document.getElementById('ctaButton'),
-    weatherGrid: document.getElementById('weatherGrid'),
-    eventsList: document.getElementById('eventsList'),
-    crewMembers: document.getElementById('crewMembers'),
-    beachesCleanedCount: document.getElementById('beachesCleanedCount'),
-    crewMembersCount: document.getElementById('crewMembersCount'),
-    trashCollectedCount: document.getElementById('trashCollectedCount'),
-    locationStatus: document.getElementById('location-status'),
-};
+let DOM = {};
+
+// Initialize DOM cache function (called after page loads)
+function initializeDOMCache() {
+    DOM = {
+        geoButton: document.getElementById('geoButton'),
+        menuToggle: document.getElementById('menuToggle'),
+        navMenu: document.getElementById('navMenu'),
+        ctaButton: document.getElementById('ctaButton'),
+        weatherGrid: document.getElementById('weatherGrid'),
+        eventsList: document.getElementById('eventsList'),
+        crewMembers: document.getElementById('crewMembers'),
+        beachesCleanedCount: document.getElementById('beachesCleanedCount'),
+        crewMembersCount: document.getElementById('crewMembersCount'),
+        trashCollectedCount: document.getElementById('trashCollectedCount'),
+        locationStatus: document.getElementById('location-status'),
+    };
+}
 
 // ========================================
 // Utility Functions
@@ -643,6 +648,9 @@ function viewBeachDetails(beachName) {
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize DOM cache first!
+    initializeDOMCache();
+
     // Navigation
     if (DOM.menuToggle) {
         DOM.menuToggle.addEventListener('click', toggleMenu);
