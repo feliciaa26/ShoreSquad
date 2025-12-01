@@ -415,24 +415,24 @@ function initializeMockEvents() {
     const mockEvents = [
         {
             id: 1,
-            name: 'Sunny Cove Saturday Cleanup',
-            location: 'Sunny Cove Beach',
+            name: '🌊 Sunny Cove Saturday Cleanup',
+            location: 'Sentosa Beach',
             date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
             crew: 12,
             maxCrew: 25,
         },
         {
             id: 2,
-            name: 'Coral Bay Deep Clean',
-            location: 'Coral Bay',
+            name: '🐚 Coral Bay Deep Clean',
+            location: 'East Coast Park',
             date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
             crew: 8,
             maxCrew: 20,
         },
         {
             id: 3,
-            name: 'Shell Point Sunrise Cleanup',
-            location: 'Shell Point',
+            name: '🌅 Shell Point Sunrise Cleanup',
+            location: 'Pasir Ris Park',
             date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
             crew: 15,
             maxCrew: 30,
@@ -490,7 +490,7 @@ function joinEvent(eventId) {
         event.crew++;
         AppState.localStorage.set('events', AppState.events);
         renderEvents();
-        showNotification('✓ You joined the cleanup! See you there! 🌊', 'success');
+        showNotification('🔥 Yesss! You in lah! See you at the cleanup! 🌊', 'success');
     }
 }
 
@@ -502,11 +502,11 @@ function shareEvent(eventId) {
     if (event && navigator.share) {
         navigator.share({
             title: 'ShoreSquad Cleanup Event',
-            text: `Join us for ${event.name} at ${event.location}! 🌊`,
+            text: `Let's gooooo! Join us for ${event.name} at ${event.location}! 🌊♻️ #EcoWarriors`,
             url: window.location.href,
         }).catch(err => console.log('Share failed:', err));
     } else {
-        showNotification('Event link copied to clipboard!', 'success');
+        showNotification('✓ Event link copied lah! Paste and share! 🌊', 'success');
     }
 }
 
@@ -523,6 +523,7 @@ function initializeMockCrew() {
         { name: 'Jordan', role: 'Eco-warrior', avatar: '♻️' },
         { name: 'Sam', role: 'Beach Lover', avatar: '🌊' },
         { name: 'Casey', role: 'Supporter', avatar: '💚' },
+        { name: 'Maya', role: 'Chief Collector', avatar: '🌱' },
     ];
 
     AppState.crewMembers = mockMembers;
@@ -550,17 +551,26 @@ function renderCrew() {
 }
 
 /**
- * Update crew statistics
+ * Update crew statistics with impact tracking
  */
 function updateCrewStats() {
     const stats = AppState.localStorage.get('stats') || {
         beachesCleaned: 5,
         trashCollected: 250,
+        impactLog: [
+            { beach: 'East Coast Park', kg: 10, date: '2024-12-01', crew: ['Alex', 'Jordan'] },
+            { beach: 'Sentosa Cove', kg: 15, date: '2024-11-24', crew: ['Sam', 'Casey'] },
+            { beach: 'Pasir Ris Park', kg: 12, date: '2024-11-17', crew: ['Maya', 'Alex'] },
+            { beach: 'Changi Beach', kg: 8, date: '2024-11-10', crew: ['Jordan', 'Sam'] },
+        ]
     };
 
     DOM.beachesCleanedCount.textContent = stats.beachesCleaned;
     DOM.crewMembersCount.textContent = AppState.crewMembers.length;
     DOM.trashCollectedCount.textContent = stats.trashCollected;
+    
+    // Store stats with impact log
+    AppState.localStorage.set('stats', stats);
 }
 
 // ========================================
@@ -663,8 +673,11 @@ document.addEventListener('DOMContentLoaded', () => {
         initMap(savedLocation.latitude, savedLocation.longitude);
         fetchWeatherData(savedLocation.latitude, savedLocation.longitude);
         DOM.locationStatus.textContent = '✓ Using saved location';
+        showNotification('🌊 Welcome back, eco-warrior! Let\'s save the beaches lah! 🔥', 'info');
     } else {
-        initMap(40.7128, -74.0060); // Default NYC
+        initMap(1.3521, 103.8198); // Default Singapore (Sentosa)
+        fetchWeatherData(1.3521, 103.8198);
+        showNotification('🌊 Yo! Enable location to find cleanup spots near you! 📍', 'info');
     }
 
     // Service Worker registration (if supported)
@@ -674,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => console.log('SW registration failed:', err));
     }
 
-    console.log('🌊 ShoreSquad app initialized successfully!');
+    console.log('🌊 ShoreSquad app initialized successfully! Let\'s save the oceans! 🐚');
 });
 
 // ========================================
